@@ -1,41 +1,41 @@
-name: Build AIX Extension
+name: Build Extension with Ant
 
 on:
   push:
     branches:
       - main
       - master
-  workflow_dispatch: # Memungkinkan tombol 'Run workflow' manual di GitHub
+  workflow_dispatch: # Supaya bisa di-run manual dari tab Actions
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Kode dari Repository
+      # 1. Checkout Kode dari Repositori
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Install Java JDK 11 (Diperlukan oleh Rush)
-      - name: Set up JDK 11
+      # 2. Setup Java JDK 8 (Versi standar paling stabil untuk Ant build App Inventor)
+      - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '8'
 
-      # 3. Install Rush CLI
-      - name: Install Rush CLI
+      # 3. Setup Apache Ant
+      - name: Set up Ant
+        uses: subosito/flutter-action@v2 # atau runner default ubuntu sudah ada ant
+        continue-on-error: true
+
+      # 4. Jalankan Proses Build menggunakan Ant
+      - name: Build Extension
         run: |
-          curl -fsSL https://raw.githubusercontent.com/shreyashsaitwal/rush-cli/main/scripts/install/install.sh | bash
-          echo "$HOME/.rush/bin" >> $GITHUB_PATH
+          ant
 
-      # 4. Jalankan Proses Build Ekstensi
-      - name: Build Extension with Rush
-        run: rush build
-
-      # 5. Upload Hasil .aix ke Artifacts GitHub (Bisa Langsung Diunduh)
+      # 5. Upload Hasil .aix ke Artifacts
       - name: Upload AIX Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AdmobEngine-AIX
-          path: out/*.aix
+          name: Extension-AIX
+          path: build/output/*.aix
