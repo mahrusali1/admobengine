@@ -1,22 +1,25 @@
-name: Build Extension with Ant
+name: Build AIX Extension
 
 on:
   push:
     branches:
-      - main
       - master
-  workflow_dispatch: # Supaya bisa di-run manual dari tab Actions
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Kode dari Repositori
-      - name: Checkout Repository
+      # 1. Checkout repository beserta Git Submodules (folder appinventor dll)
+      - name: Checkout Repository with Submodules
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Setup Java JDK 8 (Versi standar paling stabil untuk Ant build App Inventor)
+      # 2. Setup Java JDK 8 (Wajib Java 8 untuk Ant build FastBuilder App Inventor)
       - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
@@ -25,17 +28,24 @@ jobs:
 
       # 3. Setup Apache Ant
       - name: Set up Ant
-        uses: subosito/flutter-action@v2 # atau runner default ubuntu sudah ada ant
-        continue-on-error: true
-
-      # 4. Jalankan Proses Build menggunakan Ant
-      - name: Build Extension
         run: |
-          ant
+          sudo apt-get update
+          sudo apt-get install -y ant
 
-      # 5. Upload Hasil .aix ke Artifacts
+      # 4. Beri izin eksekusi skrip (jika ada script .sh)
+      - name: Grant Execute Permissions
+        run: |
+          chmod +x update-deps.sh upgrade-appinventor.sh || true
+
+      # 5. Jalankan Ant Build
+      - name: Build Extension with Ant
+        run: ant
+
+      # 6. Upload hasil .aix ke Artifacts
       - name: Upload AIX Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Extension-AIX
-          path: build/output/*.aix
+          path: |
+            build/output/*.aix
+            out/*.aix
